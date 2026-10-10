@@ -1,5 +1,6 @@
 package com.esos.apiHotel.config;
 
+
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
@@ -95,7 +96,7 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/login").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/openapi.yaml").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/openapi.yaml", "/swagger-ui.html").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/pagamentos", "/api/v1/pagamentos/**")
                         .hasAnyRole("ADMIN", "FINANCEIRO")
                         .requestMatchers(HttpMethod.GET, "/api/v1/**")

@@ -2,10 +2,23 @@ openapi: 3.0.3
 info:
   title: API Hotel
   version: 0.0.1
-  description: 20 endpoints CRUD, cancelamento, estorno e login JWT. Valores monetários
-    em reais. Datas ISO 8601.
+  description: 'API REST de gestão de hóspedes, quartos, reservas e pagamentos. Valores monetários em reais e datas
+    no formato AAAA-MM-DD.
+
+
+    Para executar operações protegidas: use POST /api/v1/auth/login, copie accessToken e informe apenas o token
+    no botão Authorize. Não inclua o prefixo Bearer. O token expira e não possui refresh.
+
+
+    Reservas exigem quarto ativo, capacidade e disponibilidade, com duração de 1 a 365 noites. Pagamentos confirmados
+    precisam ser estornados antes de alterar/excluir o pagamento ou alterar/cancelar/excluir a reserva. Hóspedes
+    e quartos com qualquer histórico de reservas não podem ser excluídos. Reservas e pagamentos têm exclusão lógica.
+
+
+    Pagamentos e estornos são registros internos; não realizam transações financeiras externas.'
 servers:
-- url: http://localhost:8080
+- url: /
+  description: Servidor da API que fornece esta documentação
 security:
 - bearerAuth: []
 paths:
@@ -184,6 +197,10 @@ paths:
           type: string
         description: Igualdade sem diferenciar maiúsculas/minúsculas.
         example: alan@example.com
+      description: '
+
+
+        Perfis permitidos: ADMIN, RECEPCAO, FINANCEIRO, CONSULTA.'
     post:
       tags:
       - hospedes
@@ -303,6 +320,10 @@ paths:
               documento: DOC-123
               email: alan@example.com
               telefone: '47999999999'
+      description: '
+
+
+        Perfis permitidos: ADMIN, RECEPCAO.'
   /api/v1/hospedes/{id}:
     get:
       tags:
@@ -402,6 +423,10 @@ paths:
           type: integer
           format: int64
         example: 1
+      description: '
+
+
+        Perfis permitidos: ADMIN, RECEPCAO, FINANCEIRO, CONSULTA.'
     put:
       tags:
       - hospedes
@@ -523,6 +548,10 @@ paths:
           type: integer
           format: int64
         example: 1
+      description: '
+
+
+        Perfis permitidos: ADMIN, RECEPCAO.'
     delete:
       tags:
       - hospedes
@@ -611,10 +640,12 @@ paths:
           type: integer
           format: int64
         example: 1
-      description: Exclusão física, somente se nunca houve reserva vinculada, incluindo
-        histórico excluído. Resposta sem corpo. Reserva exige ausência de pagamentos
-        confirmados; pagamento exige estorno. Cadastros de hóspede/quarto exigem ausência
-        de histórico de reservas.
+      description: 'Exclusão física, somente se nunca houve reserva vinculada, incluindo histórico excluído. Resposta
+        sem corpo. Reserva exige ausência de pagamentos confirmados; pagamento exige estorno. Cadastros de hóspede/quarto
+        exigem ausência de histórico de reservas.
+
+
+        Perfis permitidos: ADMIN.'
   /api/v1/quartos:
     get:
       tags:
@@ -796,6 +827,10 @@ paths:
           type: integer
           minimum: 1
         example: 2
+      description: '
+
+
+        Perfis permitidos: ADMIN, RECEPCAO, FINANCEIRO, CONSULTA.'
     post:
       tags:
       - quartos
@@ -917,6 +952,10 @@ paths:
               capacidade: 2
               valorDiaria: 150.0
               ativo: true
+      description: '
+
+
+        Perfis permitidos: ADMIN.'
   /api/v1/quartos/{id}:
     get:
       tags:
@@ -1017,6 +1056,10 @@ paths:
           type: integer
           format: int64
         example: 1
+      description: '
+
+
+        Perfis permitidos: ADMIN, RECEPCAO, FINANCEIRO, CONSULTA.'
     put:
       tags:
       - quartos
@@ -1140,6 +1183,10 @@ paths:
           type: integer
           format: int64
         example: 1
+      description: '
+
+
+        Perfis permitidos: ADMIN.'
     delete:
       tags:
       - quartos
@@ -1228,10 +1275,12 @@ paths:
           type: integer
           format: int64
         example: 1
-      description: Exclusão física, somente se nunca houve reserva vinculada, incluindo
-        histórico excluído. Resposta sem corpo. Reserva exige ausência de pagamentos
-        confirmados; pagamento exige estorno. Cadastros de hóspede/quarto exigem ausência
-        de histórico de reservas.
+      description: 'Exclusão física, somente se nunca houve reserva vinculada, incluindo histórico excluído. Resposta
+        sem corpo. Reserva exige ausência de pagamentos confirmados; pagamento exige estorno. Cadastros de hóspede/quarto
+        exigem ausência de histórico de reservas.
+
+
+        Perfis permitidos: ADMIN.'
   /api/v1/reservas:
     get:
       tags:
@@ -1432,6 +1481,10 @@ paths:
           format: date
         description: Data de saída exata.
         example: '2030-01-12'
+      description: '
+
+
+        Perfis permitidos: ADMIN, RECEPCAO, FINANCEIRO, CONSULTA.'
     post:
       tags:
       - reservas
@@ -1556,6 +1609,10 @@ paths:
               entrada: '2030-01-10'
               saida: '2030-01-12'
               quantidadeHospedes: 1
+      description: '
+
+
+        Perfis permitidos: ADMIN, RECEPCAO.'
   /api/v1/reservas/{id}:
     get:
       tags:
@@ -1659,6 +1716,10 @@ paths:
           type: integer
           format: int64
         example: 1
+      description: '
+
+
+        Perfis permitidos: ADMIN, RECEPCAO, FINANCEIRO, CONSULTA.'
     put:
       tags:
       - reservas
@@ -1785,14 +1846,15 @@ paths:
           type: integer
           format: int64
         example: 1
-      description: 'Somente confirmada, sem pagamentos confirmados e com saída original
-        posterior a hoje. Mesmo quarto preserva a diária contratada; alterações de
-        datas recalculam somente o número de noites. Troca de quarto em reserva futura
-        contrata a diária vigente do destino. Em andamento (entrada anterior a hoje):
-        mantém quarto/entrada originais e saída proposta posterior a hoje. Revalida
-        disponibilidade, capacidade, duração e total. Pré-condição: reserva confirmada,
-        sem pagamentos confirmados. A diária do quarto foi reajustada para 200, mas
-        a reserva mantém diária contratada 150 e total 300 para duas noites.'
+      description: 'Somente confirmada, sem pagamentos confirmados e com saída original posterior a hoje. Mesmo
+        quarto preserva a diária contratada; alterações de datas recalculam somente o número de noites. Troca de
+        quarto em reserva futura contrata a diária vigente do destino. Em andamento (entrada anterior a hoje): mantém
+        quarto/entrada originais e saída proposta posterior a hoje. Revalida disponibilidade, capacidade, duração
+        e total. Pré-condição: reserva confirmada, sem pagamentos confirmados. A diária do quarto foi reajustada
+        para 200, mas a reserva mantém diária contratada 150 e total 300 para duas noites.
+
+
+        Perfis permitidos: ADMIN, RECEPCAO.'
     delete:
       tags:
       - reservas
@@ -1881,20 +1943,24 @@ paths:
           type: integer
           format: int64
         example: 1
-      description: Exclusão lógica. Reserva é cancelada; exige ausência de pagamentos
-        confirmados. Resposta sem corpo. Reserva exige ausência de pagamentos confirmados;
-        pagamento exige estorno. Cadastros de hóspede/quarto exigem ausência de histórico
-        de reservas.
+      description: 'Exclusão lógica. Reserva é cancelada; exige ausência de pagamentos confirmados. Resposta sem
+        corpo. Reserva exige ausência de pagamentos confirmados; pagamento exige estorno. Cadastros de hóspede/quarto
+        exigem ausência de histórico de reservas.
+
+
+        Perfis permitidos: ADMIN.'
   /api/v1/reservas/{id}/cancelar:
     patch:
       tags:
       - reservas
       operationId: cancelarReserva
       summary: Cancelar reserva
-      description: Idempotente; preserva histórico. Cancelamento exige ausência de
-        pagamentos confirmados. Estorno é registro interno, sem integração bancária.
-        Cancelar reserva exige que não existam pagamentos confirmados. Estorno é registro
-        interno e não integra um gateway bancário.
+      description: 'Idempotente; preserva histórico. Cancelamento exige ausência de pagamentos confirmados. Estorno
+        é registro interno, sem integração bancária. Cancelar reserva exige que não existam pagamentos confirmados.
+        Estorno é registro interno e não integra um gateway bancário.
+
+
+        Perfis permitidos: ADMIN, RECEPCAO.'
       parameters:
       - name: id
         in: path
@@ -2175,6 +2241,10 @@ paths:
           - CARTAO_DEBITO
           - TRANSFERENCIA
         example: PIX
+      description: '
+
+
+        Perfis permitidos: ADMIN, FINANCEIRO.'
     post:
       tags:
       - pagamentos
@@ -2293,6 +2363,10 @@ paths:
               reservaId: 1
               valor: 300.0
               forma: PIX
+      description: '
+
+
+        Perfis permitidos: ADMIN, FINANCEIRO.'
   /api/v1/pagamentos/{id}:
     get:
       tags:
@@ -2392,6 +2466,10 @@ paths:
           type: integer
           format: int64
         example: 1
+      description: '
+
+
+        Perfis permitidos: ADMIN, FINANCEIRO.'
     put:
       tags:
       - pagamentos
@@ -2512,10 +2590,12 @@ paths:
           type: integer
           format: int64
         example: 1
-      description: 'Somente estornado. Corrige valor/forma, mantendo reserva e status
-        ESTORNADO; não movimenta dinheiro. Pré-condição: pagamento já ESTORNADO. A
-        correção preserva esse status e o vínculo com a reserva; um pagamento CONFIRMADO
-        retorna 409.'
+      description: 'Somente estornado. Corrige valor/forma, mantendo reserva e status ESTORNADO; não movimenta dinheiro.
+        Pré-condição: pagamento já ESTORNADO. A correção preserva esse status e o vínculo com a reserva; um pagamento
+        CONFIRMADO retorna 409.
+
+
+        Perfis permitidos: ADMIN, FINANCEIRO.'
     delete:
       tags:
       - pagamentos
@@ -2604,19 +2684,23 @@ paths:
           type: integer
           format: int64
         example: 1
-      description: Exclusão lógica, somente após estorno. Resposta sem corpo. Reserva
-        exige ausência de pagamentos confirmados; pagamento exige estorno. Cadastros
-        de hóspede/quarto exigem ausência de histórico de reservas.
+      description: 'Exclusão lógica, somente após estorno. Resposta sem corpo. Reserva exige ausência de pagamentos
+        confirmados; pagamento exige estorno. Cadastros de hóspede/quarto exigem ausência de histórico de reservas.
+
+
+        Perfis permitidos: ADMIN.'
   /api/v1/pagamentos/{id}/estornar:
     patch:
       tags:
       - pagamentos
       operationId: estornarPagamento
       summary: Estornar pagamento
-      description: Idempotente; preserva histórico. Cancelamento exige ausência de
-        pagamentos confirmados. Estorno é registro interno, sem integração bancária.
-        Cancelar reserva exige que não existam pagamentos confirmados. Estorno é registro
-        interno e não integra um gateway bancário.
+      description: 'Idempotente; preserva histórico. Cancelamento exige ausência de pagamentos confirmados. Estorno
+        é registro interno, sem integração bancária. Cancelar reserva exige que não existam pagamentos confirmados.
+        Estorno é registro interno e não integra um gateway bancário.
+
+
+        Perfis permitidos: ADMIN, FINANCEIRO.'
       parameters:
       - name: id
         in: path
@@ -2794,8 +2878,11 @@ paths:
                 title: Internal Server Error
                 status: 500
                 detail: Falha interna ao processar a solicitação.
-      description: ' Credenciais ilustrativas: use os valores configurados localmente.
-        O token exibido é um marcador, não um JWT válido.'
+      description: ' Credenciais ilustrativas: use os valores configurados localmente. O token exibido é um marcador,
+        não um JWT válido.
+
+
+        Perfis permitidos: Público.'
 components:
   securitySchemes:
     bearerAuth:
@@ -2877,8 +2964,7 @@ components:
           type: boolean
         empty:
           type: boolean
-      description: Página Spring Data. Campos adicionais de paginação/ordenação podem
-        ser retornados.
+      description: Página Spring Data. Campos adicionais de paginação/ordenação podem ser retornados.
     QuartoRequest:
       type: object
       required:
@@ -2959,8 +3045,7 @@ components:
           type: boolean
         empty:
           type: boolean
-      description: Página Spring Data. Campos adicionais de paginação/ordenação podem
-        ser retornados.
+      description: Página Spring Data. Campos adicionais de paginação/ordenação podem ser retornados.
     ReservaRequest:
       type: object
       required:
@@ -3039,8 +3124,8 @@ components:
           minimum: 0.01
           maximum: 9999999999.99
           multipleOf: 0.01
-          description: Diária contratada, preservada em alterações do mesmo quarto.
-            Registros legados derivam do total original dividido pelo número de noites.
+          description: Diária contratada, preservada em alterações do mesmo quarto. Registros legados derivam do
+            total original dividido pelo número de noites.
     PaginaReserva:
       type: object
       properties:
@@ -3063,8 +3148,7 @@ components:
           type: boolean
         empty:
           type: boolean
-      description: Página Spring Data. Campos adicionais de paginação/ordenação podem
-        ser retornados.
+      description: Página Spring Data. Campos adicionais de paginação/ordenação podem ser retornados.
     PagamentoRequest:
       type: object
       required:
@@ -3145,8 +3229,7 @@ components:
           type: boolean
         empty:
           type: boolean
-      description: Página Spring Data. Campos adicionais de paginação/ordenação podem
-        ser retornados.
+      description: Página Spring Data. Campos adicionais de paginação/ordenação podem ser retornados.
     ProblemDetail:
       type: object
       properties:
@@ -3217,8 +3300,7 @@ components:
         entrada:
           type: string
           format: date
-          description: 'Reserva futura: hoje ou depois. Em andamento: deve manter
-            a entrada original, mesmo passada.'
+          description: 'Reserva futura: hoje ou depois. Em andamento: deve manter a entrada original, mesmo passada.'
         saida:
           type: string
           format: date
@@ -3226,3 +3308,14 @@ components:
         quantidadeHospedes:
           type: integer
           minimum: 1
+tags:
+- name: auth
+  description: Autenticação e emissão de token JWT.
+- name: hospedes
+  description: Cadastro de hóspedes e consultas com filtros.
+- name: quartos
+  description: Cadastro de quartos, capacidade, diária e situação.
+- name: reservas
+  description: Reservas, diária contratada, disponibilidade e cancelamento.
+- name: pagamentos
+  description: Registro de pagamentos e estornos.

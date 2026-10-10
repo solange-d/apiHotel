@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>API Hotel — Swagger UI</title>
+  <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5.11.0/swagger-ui.css">
+</head>
+<body>
+  <div id="swagger-ui"></div>
+  <noscript>Ative o JavaScript para visualizar a documentação interativa.</noscript>
+  <script src="https://unpkg.com/swagger-ui-dist@5.11.0/swagger-ui-bundle.js" crossorigin="anonymous"></script>
+  <script>
+    window.onload = function () {
+      if (typeof SwaggerUIBundle === "undefined") {
+        document.getElementById("swagger-ui").textContent = "Não foi possível carregar o Swagger UI. Verifique o acesso à internet e ao domínio unpkg.com.";
+        return;
+      }
+      window.ui = SwaggerUIBundle({
+        url: new URL("openapi.yaml", window.location.href).href,
+        dom_id: "#swagger-ui",
+        deepLinking: true,
+        displayRequestDuration: true,
+        persistAuthorization: false,
+        validatorUrl: null,
+        supportedSubmitMethods: ["get", "post", "put", "delete", "patch"]
+      });
+    };
+  </script>
+</body>
+</html>

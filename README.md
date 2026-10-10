@@ -234,7 +234,7 @@ Invoke-RestMethod -Uri http://localhost:8080/api/v1/hospedes -Headers $headers
 | Consultar/criar/atualizar pagamentos; estornar pagamentos | Sim | Não | Sim | Não |
 | Excluir recursos | Sim | Não | Não | Não |
 
-Login e `GET /openapi.yaml` são públicos. As demais operações documentadas exigem JWT. Credenciais ausentes ou inválidas retornam **401**; falta de permissão retorna **403**.
+Login, `GET /openapi.yaml` e `GET /swagger-ui.html` são públicos. As demais operações documentadas exigem JWT. Credenciais ausentes ou inválidas retornam **401**; falta de permissão retorna **403**.
 
 Os usuários são definidos por configuração e mantidos em memória. As senhas são transformadas em BCrypt na inicialização. O JWT utiliza HS256 e valida assinatura, emissor e prazo. Não há sessão de servidor ou refresh token; após expirar, é necessário fazer login novamente.
 
@@ -365,11 +365,58 @@ Erros de validação de campos incluem `erros`, com `campo` e `mensagem`. O reto
 
 ## Documentação da API
 
-O contrato OpenAPI está em [openapi.yaml](src/main/resources/static/openapi.yaml). Com a aplicação iniciada na porta padrão, consulte [http://localhost:8080/openapi.yaml](http://localhost:8080/openapi.yaml).
+A documentação interativa dos **23 endpoints** está disponível no Swagger UI. Ela apresenta contratos de entrada e saída, exemplos, parâmetros, filtros, códigos HTTP e perfis de acesso, além de permitir executar as operações pelo navegador.
 
-A especificação contém schemas, parâmetros, códigos HTTP e exemplos de entrada/saída para as 23 operações. Pode ser importada em ferramentas compatíveis com OpenAPI, como Postman e Swagger Editor. A aplicação não inclui uma interface Swagger UI embarcada.
+### Acessar o Swagger UI
 
-Os exemplos por operação também estão ao final deste README. Eles são ilustrativos e não representam relatórios de execução de testes.
+Após instalar ou atualizar os arquivos da integração Swagger, **reinicie a API**. Se ela estiver executando no terminal, pressione **Ctrl+C** e inicie novamente na raiz do projeto:
+
+No PowerShell:
+
+```powershell
+.\mvnw.cmd spring-boot:run
+```
+
+No Linux/macOS:
+
+```bash
+./mvnw spring-boot:run
+```
+
+Com a aplicação iniciada:
+
+1. Acesse [**http://localhost:8080/swagger-ui.html**](http://localhost:8080/swagger-ui.html).
+2. Expanda o grupo **auth** e a operação **POST /api/v1/auth/login**.
+3. Clique em **Try it out** e preencha `username` e `password` com as credenciais configuradas no `.env`.
+4. Clique em **Execute**. Na resposta **200 OK**, copie somente o valor de `accessToken`, sem as aspas.
+5. Clique em **Authorize**, cole o token **sem o prefixo `Bearer`**, confirme em **Authorize** e feche a janela em **Close**.
+6. Expanda a operação desejada, clique em **Try it out**, preencha os parâmetros ou o JSON e clique em **Execute**.
+7. Consulte o status HTTP e o corpo retornado em **Responses**.
+
+O Swagger UI acrescenta o prefixo `Bearer` ao header de autenticação. Executar o login não autoriza automaticamente as demais operações; é necessário informar o token em **Authorize**. Quando o token expirar ou a página for recarregada, faça login e autorize novamente.
+
+Se `SERVER_PORT` estiver configurada com outra porta, ajuste as URLs. Para acessar uma API hospedada em outro servidor, substitua `localhost` pelo endereço desse servidor. As chamadas da interface utilizam o servidor que fornece a documentação.
+
+### Executar um fluxo de exemplo
+
+Para preparar registros relacionados, execute nesta ordem:
+
+1. **POST /api/v1/hospedes**: cadastre um hóspede e copie o `id` da resposta.
+2. **POST /api/v1/quartos**: cadastre um quarto ativo e copie o `id` da resposta. Essa operação exige ADMIN.
+3. **POST /api/v1/reservas**: informe os IDs em `hospedeId` e `quartoId`, datas válidas e uma quantidade de hóspedes compatível com a capacidade.
+4. **POST /api/v1/pagamentos**: informe o ID da reserva em `reservaId`, a forma de pagamento e um valor dentro do saldo disponível.
+
+Os IDs e as datas dos exemplos são ilustrativos e devem ser ajustados. O Swagger UI não captura os IDs automaticamente. Para testar cancelamento ou alterações de uma reserva com pagamentos confirmados, estorne os pagamentos antes, conforme as [regras de negócio](#regras-de-negócio).
+
+**Execute envia requisições reais à API e pode alterar os dados do banco.** As permissões do usuário autenticado continuam sendo aplicadas: respostas **401** indicam problemas de autenticação; **403**, falta de permissão; **400**, dados inválidos; e **409**, conflitos ou impedimentos de negócio. Consulte o campo `detail` da resposta para entender o motivo.
+
+### Contrato OpenAPI e requisitos da interface
+
+O contrato OpenAPI 3.0.3 está em [openapi.yaml](src/main/resources/static/openapi.yaml) e pode ser consultado em [http://localhost:8080/openapi.yaml](http://localhost:8080/openapi.yaml). A especificação também pode ser importada em ferramentas compatíveis, como Postman e Swagger Editor.
+
+A interface está em [swagger-ui.html](src/main/resources/static/swagger-ui.html) e carrega os recursos CSS e JavaScript do Swagger UI pelo domínio `unpkg.com`; portanto, o navegador precisa de acesso à internet. A interface e o contrato são públicos, enquanto as operações protegidas da API exigem JWT. Abra a interface pela URL da aplicação, não diretamente pelo arquivo HTML.
+
+O contrato é mantido em arquivo estático: alterações nos endpoints ou DTOs devem ser acompanhadas da atualização de `openapi.yaml`. Os exemplos por operação também estão ao final deste README e não representam relatórios de execução de testes.
 
 ## Testes
 
