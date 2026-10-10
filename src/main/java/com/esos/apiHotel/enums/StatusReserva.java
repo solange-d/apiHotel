@@ -1,5 +1,3 @@
 package com.esos.apiHotel.enums;
 
-public class StatusReserva {
-    
-}
+public enum StatusReserva { CONFIRMADA, CANCELADA }

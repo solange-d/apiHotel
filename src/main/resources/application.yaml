@@ -1,20 +1,29 @@
 spring:
   application:
     name: apiHotel
-
   config:
     import: "optional:file:./.env[.properties]"
-
   datasource:
     url: ${DB_URL}
     username: ${DB_USER}
     password: ${DB_PASSWORD}
-
   jpa:
     hibernate:
       ddl-auto: update
     open-in-view: false
     show-sql: false
-
 server:
   port: ${SERVER_PORT:8080}
+hotel:
+  security:
+    jwt-secret: ${JWT_SECRET}
+    issuer: api-hotel
+    token-seconds: ${JWT_TOKEN_SECONDS:900}
+    admin-user: ${ADMIN_USER:admin}
+    admin-password: ${ADMIN_PASSWORD}
+    recepcao-user: ${RECEPCAO_USER:}
+    recepcao-password: ${RECEPCAO_PASSWORD:}
+    financeiro-user: ${FINANCEIRO_USER:}
+    financeiro-password: ${FINANCEIRO_PASSWORD:}
+    consulta-user: ${CONSULTA_USER:}
+    consulta-password: ${CONSULTA_PASSWORD:}

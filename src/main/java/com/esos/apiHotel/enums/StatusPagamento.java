@@ -1,5 +1,3 @@
 package com.esos.apiHotel.enums;
 
-public class StatusPagamento {
-    
-}
+public enum StatusPagamento { CONFIRMADO, ESTORNADO }

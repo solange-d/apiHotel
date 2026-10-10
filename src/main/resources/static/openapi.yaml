@@ -1,0 +1,3228 @@
+openapi: 3.0.3
+info:
+  title: API Hotel
+  version: 0.0.1
+  description: 20 endpoints CRUD, cancelamento, estorno e login JWT. Valores monetários
+    em reais. Datas ISO 8601.
+servers:
+- url: http://localhost:8080
+security:
+- bearerAuth: []
+paths:
+  /api/v1/hospedes:
+    get:
+      tags:
+      - hospedes
+      operationId: getHospedeLista
+      summary: Listar hospedes
+      responses:
+        '400':
+          description: Dados ou parâmetros inválidos.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Bad Request
+                status: 400
+                detail: JSON, parâmetro, data ou enum inválido.
+        '401':
+          description: Token ausente/inválido, ou credenciais de login incorretas.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Unauthorized
+                status: 401
+                detail: Credenciais ausentes ou inválidas.
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+              example: Bearer
+              description: Desafio Bearer.
+        '403':
+          description: Perfil sem permissão.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Forbidden
+                status: 403
+                detail: Perfil sem permissão para esta operação.
+        '404':
+          description: Recurso ausente ou logicamente excluído.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Not Found
+                status: 404
+                detail: Hospede não encontrado.
+        '409':
+          description: Duplicidade, concorrência ou regra de negócio impede a operação.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Conflict
+                status: 409
+                detail: Alteração simultânea. Refaça a operação.
+        '500':
+          description: Falha inesperada, sem detalhes internos.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Internal Server Error
+                status: 500
+                detail: Falha interna ao processar a solicitação.
+        '200':
+          description: Sucesso.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginaHospede'
+              example:
+                content:
+                - nome: Alan Maier
+                  documento: DOC-123
+                  email: alan@example.com
+                  telefone: '47999999999'
+                  id: 1
+                pageable:
+                  pageNumber: 0
+                  pageSize: 20
+                  sort:
+                    empty: false
+                    sorted: true
+                    unsorted: false
+                  offset: 0
+                  paged: true
+                  unpaged: false
+                totalElements: 1
+                totalPages: 1
+                last: true
+                size: 20
+                number: 0
+                sort:
+                  empty: false
+                  sorted: true
+                  unsorted: false
+                numberOfElements: 1
+                first: true
+                empty: false
+      parameters:
+      - name: pagina
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+        example: 0
+      - name: tamanho
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        example: 20
+      - name: ordenarPor
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - id
+          - nome
+          - documento
+          - email
+          default: id
+        example: id
+      - name: direcao
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - asc
+          - desc
+          default: asc
+        example: asc
+      - name: nome
+        in: query
+        required: false
+        schema:
+          type: string
+        description: Contém, sem diferenciar maiúsculas/minúsculas.
+        example: Alan
+      - name: documento
+        in: query
+        required: false
+        schema:
+          type: string
+        description: Igualdade exata após trim.
+        example: DOC-123
+      - name: email
+        in: query
+        required: false
+        schema:
+          type: string
+        description: Igualdade sem diferenciar maiúsculas/minúsculas.
+        example: alan@example.com
+    post:
+      tags:
+      - hospedes
+      operationId: postHospedeLista
+      summary: Criar hospede
+      responses:
+        '400':
+          description: Dados ou parâmetros inválidos.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              examples:
+                jsonOuEnumInvalido:
+                  value:
+                    type: about:blank
+                    title: Bad Request
+                    status: 400
+                    detail: JSON, parâmetro, data ou enum inválido.
+                campoObrigatorioAusente:
+                  summary: Campo obrigatório omitido
+                  value:
+                    type: about:blank
+                    title: Bad Request
+                    status: 400
+                    detail: Dados inválidos.
+                    erros:
+                    - campo: nome
+                      mensagem: não deve estar em branco
+        '401':
+          description: Token ausente/inválido, ou credenciais de login incorretas.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Unauthorized
+                status: 401
+                detail: Credenciais ausentes ou inválidas.
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+              example: Bearer
+              description: Desafio Bearer.
+        '403':
+          description: Perfil sem permissão.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Forbidden
+                status: 403
+                detail: Perfil sem permissão para esta operação.
+        '404':
+          description: Recurso ausente ou logicamente excluído.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Not Found
+                status: 404
+                detail: Hospede não encontrado.
+        '409':
+          description: Duplicidade, concorrência ou regra de negócio impede a operação.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Conflict
+                status: 409
+                detail: Alteração simultânea. Refaça a operação.
+        '500':
+          description: Falha inesperada, sem detalhes internos.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Internal Server Error
+                status: 500
+                detail: Falha interna ao processar a solicitação.
+        '201':
+          description: Criado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HospedeResponse'
+              example:
+                nome: Alan Maier
+                documento: DOC-123
+                email: alan@example.com
+                telefone: '47999999999'
+                id: 1
+          headers:
+            Location:
+              description: URI relativa do recurso criado.
+              schema:
+                type: string
+              example: /api/v1/hospedes/1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HospedeRequest'
+            example:
+              nome: Alan Maier
+              documento: DOC-123
+              email: alan@example.com
+              telefone: '47999999999'
+  /api/v1/hospedes/{id}:
+    get:
+      tags:
+      - hospedes
+      operationId: getHospedePorId
+      summary: Consultar hospede
+      responses:
+        '400':
+          description: Dados ou parâmetros inválidos.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Bad Request
+                status: 400
+                detail: JSON, parâmetro, data ou enum inválido.
+        '401':
+          description: Token ausente/inválido, ou credenciais de login incorretas.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Unauthorized
+                status: 401
+                detail: Credenciais ausentes ou inválidas.
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+              example: Bearer
+              description: Desafio Bearer.
+        '403':
+          description: Perfil sem permissão.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Forbidden
+                status: 403
+                detail: Perfil sem permissão para esta operação.
+        '404':
+          description: Recurso ausente ou logicamente excluído.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Not Found
+                status: 404
+                detail: Hospede não encontrado.
+        '409':
+          description: Duplicidade, concorrência ou regra de negócio impede a operação.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Conflict
+                status: 409
+                detail: Alteração simultânea. Refaça a operação.
+        '500':
+          description: Falha inesperada, sem detalhes internos.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Internal Server Error
+                status: 500
+                detail: Falha interna ao processar a solicitação.
+        '200':
+          description: Sucesso.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HospedeResponse'
+              example:
+                nome: Alan Maier
+                documento: DOC-123
+                email: alan@example.com
+                telefone: '47999999999'
+                id: 1
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 1
+    put:
+      tags:
+      - hospedes
+      operationId: putHospedePorId
+      summary: Atualizar hospede
+      responses:
+        '400':
+          description: Dados ou parâmetros inválidos.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              examples:
+                jsonOuEnumInvalido:
+                  value:
+                    type: about:blank
+                    title: Bad Request
+                    status: 400
+                    detail: JSON, parâmetro, data ou enum inválido.
+                campoObrigatorioAusente:
+                  summary: Campo obrigatório omitido
+                  value:
+                    type: about:blank
+                    title: Bad Request
+                    status: 400
+                    detail: Dados inválidos.
+                    erros:
+                    - campo: nome
+                      mensagem: não deve estar em branco
+        '401':
+          description: Token ausente/inválido, ou credenciais de login incorretas.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Unauthorized
+                status: 401
+                detail: Credenciais ausentes ou inválidas.
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+              example: Bearer
+              description: Desafio Bearer.
+        '403':
+          description: Perfil sem permissão.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Forbidden
+                status: 403
+                detail: Perfil sem permissão para esta operação.
+        '404':
+          description: Recurso ausente ou logicamente excluído.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Not Found
+                status: 404
+                detail: Hospede não encontrado.
+        '409':
+          description: Duplicidade, concorrência ou regra de negócio impede a operação.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Conflict
+                status: 409
+                detail: Alteração simultânea. Refaça a operação.
+        '500':
+          description: Falha inesperada, sem detalhes internos.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Internal Server Error
+                status: 500
+                detail: Falha interna ao processar a solicitação.
+        '200':
+          description: Sucesso.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HospedeResponse'
+              example:
+                nome: Alan Maier
+                documento: DOC-123
+                email: alan@example.com
+                telefone: '47988888888'
+                id: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HospedeRequest'
+            example:
+              nome: Alan Maier
+              documento: DOC-123
+              email: alan@example.com
+              telefone: '47988888888'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 1
+    delete:
+      tags:
+      - hospedes
+      operationId: deleteHospedePorId
+      summary: Excluir hospede
+      responses:
+        '400':
+          description: Dados ou parâmetros inválidos.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Bad Request
+                status: 400
+                detail: JSON, parâmetro, data ou enum inválido.
+        '401':
+          description: Token ausente/inválido, ou credenciais de login incorretas.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Unauthorized
+                status: 401
+                detail: Credenciais ausentes ou inválidas.
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+              example: Bearer
+              description: Desafio Bearer.
+        '403':
+          description: Perfil sem permissão.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Forbidden
+                status: 403
+                detail: Perfil sem permissão para esta operação.
+        '404':
+          description: Recurso ausente ou logicamente excluído.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Not Found
+                status: 404
+                detail: Hospede não encontrado.
+        '409':
+          description: Duplicidade, concorrência ou regra de negócio impede a operação.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Conflict
+                status: 409
+                detail: Alteração simultânea. Refaça a operação.
+        '500':
+          description: Falha inesperada, sem detalhes internos.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Internal Server Error
+                status: 500
+                detail: Falha interna ao processar a solicitação.
+        '204':
+          description: Exclusão concluída. HTTP 204, sem corpo de resposta.
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 1
+      description: Exclusão física, somente se nunca houve reserva vinculada, incluindo
+        histórico excluído. Resposta sem corpo. Reserva exige ausência de pagamentos
+        confirmados; pagamento exige estorno. Cadastros de hóspede/quarto exigem ausência
+        de histórico de reservas.
+  /api/v1/quartos:
+    get:
+      tags:
+      - quartos
+      operationId: getQuartoLista
+      summary: Listar quartos
+      responses:
+        '400':
+          description: Dados ou parâmetros inválidos.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Bad Request
+                status: 400
+                detail: JSON, parâmetro, data ou enum inválido.
+        '401':
+          description: Token ausente/inválido, ou credenciais de login incorretas.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Unauthorized
+                status: 401
+                detail: Credenciais ausentes ou inválidas.
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+              example: Bearer
+              description: Desafio Bearer.
+        '403':
+          description: Perfil sem permissão.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Forbidden
+                status: 403
+                detail: Perfil sem permissão para esta operação.
+        '404':
+          description: Recurso ausente ou logicamente excluído.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Not Found
+                status: 404
+                detail: Quarto não encontrado.
+        '409':
+          description: Duplicidade, concorrência ou regra de negócio impede a operação.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Conflict
+                status: 409
+                detail: Alteração simultânea. Refaça a operação.
+        '500':
+          description: Falha inesperada, sem detalhes internos.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Internal Server Error
+                status: 500
+                detail: Falha interna ao processar a solicitação.
+        '200':
+          description: Sucesso.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginaQuarto'
+              example:
+                content:
+                - numero: '101'
+                  tipo: CASAL
+                  capacidade: 2
+                  valorDiaria: 150.0
+                  ativo: true
+                  id: 1
+                pageable:
+                  pageNumber: 0
+                  pageSize: 20
+                  sort:
+                    empty: false
+                    sorted: true
+                    unsorted: false
+                  offset: 0
+                  paged: true
+                  unpaged: false
+                totalElements: 1
+                totalPages: 1
+                last: true
+                size: 20
+                number: 0
+                sort:
+                  empty: false
+                  sorted: true
+                  unsorted: false
+                numberOfElements: 1
+                first: true
+                empty: false
+      parameters:
+      - name: pagina
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+        example: 0
+      - name: tamanho
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        example: 20
+      - name: ordenarPor
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - id
+          - numero
+          - tipo
+          - capacidade
+          - valorDiaria
+          default: id
+        example: id
+      - name: direcao
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - asc
+          - desc
+          default: asc
+        example: asc
+      - name: numero
+        in: query
+        required: false
+        schema:
+          type: string
+        example: '101'
+      - name: tipo
+        in: query
+        required: false
+        schema:
+          type: string
+        example: CASAL
+      - name: ativo
+        in: query
+        required: false
+        schema:
+          type: boolean
+        example: true
+      - name: capacidadeMinima
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+        example: 2
+    post:
+      tags:
+      - quartos
+      operationId: postQuartoLista
+      summary: Criar quarto
+      responses:
+        '400':
+          description: Dados ou parâmetros inválidos.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              examples:
+                jsonOuEnumInvalido:
+                  value:
+                    type: about:blank
+                    title: Bad Request
+                    status: 400
+                    detail: JSON, parâmetro, data ou enum inválido.
+                campoObrigatorioAusente:
+                  summary: Campo obrigatório omitido
+                  value:
+                    type: about:blank
+                    title: Bad Request
+                    status: 400
+                    detail: Dados inválidos.
+                    erros:
+                    - campo: numero
+                      mensagem: não deve estar em branco
+        '401':
+          description: Token ausente/inválido, ou credenciais de login incorretas.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Unauthorized
+                status: 401
+                detail: Credenciais ausentes ou inválidas.
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+              example: Bearer
+              description: Desafio Bearer.
+        '403':
+          description: Perfil sem permissão.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Forbidden
+                status: 403
+                detail: Perfil sem permissão para esta operação.
+        '404':
+          description: Recurso ausente ou logicamente excluído.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Not Found
+                status: 404
+                detail: Quarto não encontrado.
+        '409':
+          description: Duplicidade, concorrência ou regra de negócio impede a operação.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Conflict
+                status: 409
+                detail: Alteração simultânea. Refaça a operação.
+        '500':
+          description: Falha inesperada, sem detalhes internos.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Internal Server Error
+                status: 500
+                detail: Falha interna ao processar a solicitação.
+        '201':
+          description: Criado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuartoResponse'
+              example:
+                numero: '101'
+                tipo: CASAL
+                capacidade: 2
+                valorDiaria: 150.0
+                ativo: true
+                id: 1
+          headers:
+            Location:
+              description: URI relativa do recurso criado.
+              schema:
+                type: string
+              example: /api/v1/quartos/1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuartoRequest'
+            example:
+              numero: '101'
+              tipo: CASAL
+              capacidade: 2
+              valorDiaria: 150.0
+              ativo: true
+  /api/v1/quartos/{id}:
+    get:
+      tags:
+      - quartos
+      operationId: getQuartoPorId
+      summary: Consultar quarto
+      responses:
+        '400':
+          description: Dados ou parâmetros inválidos.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Bad Request
+                status: 400
+                detail: JSON, parâmetro, data ou enum inválido.
+        '401':
+          description: Token ausente/inválido, ou credenciais de login incorretas.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Unauthorized
+                status: 401
+                detail: Credenciais ausentes ou inválidas.
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+              example: Bearer
+              description: Desafio Bearer.
+        '403':
+          description: Perfil sem permissão.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Forbidden
+                status: 403
+                detail: Perfil sem permissão para esta operação.
+        '404':
+          description: Recurso ausente ou logicamente excluído.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Not Found
+                status: 404
+                detail: Quarto não encontrado.
+        '409':
+          description: Duplicidade, concorrência ou regra de negócio impede a operação.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Conflict
+                status: 409
+                detail: Alteração simultânea. Refaça a operação.
+        '500':
+          description: Falha inesperada, sem detalhes internos.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Internal Server Error
+                status: 500
+                detail: Falha interna ao processar a solicitação.
+        '200':
+          description: Sucesso.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuartoResponse'
+              example:
+                numero: '101'
+                tipo: CASAL
+                capacidade: 2
+                valorDiaria: 150.0
+                ativo: true
+                id: 1
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 1
+    put:
+      tags:
+      - quartos
+      operationId: putQuartoPorId
+      summary: Atualizar quarto
+      responses:
+        '400':
+          description: Dados ou parâmetros inválidos.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              examples:
+                jsonOuEnumInvalido:
+                  value:
+                    type: about:blank
+                    title: Bad Request
+                    status: 400
+                    detail: JSON, parâmetro, data ou enum inválido.
+                campoObrigatorioAusente:
+                  summary: Campo obrigatório omitido
+                  value:
+                    type: about:blank
+                    title: Bad Request
+                    status: 400
+                    detail: Dados inválidos.
+                    erros:
+                    - campo: numero
+                      mensagem: não deve estar em branco
+        '401':
+          description: Token ausente/inválido, ou credenciais de login incorretas.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Unauthorized
+                status: 401
+                detail: Credenciais ausentes ou inválidas.
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+              example: Bearer
+              description: Desafio Bearer.
+        '403':
+          description: Perfil sem permissão.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Forbidden
+                status: 403
+                detail: Perfil sem permissão para esta operação.
+        '404':
+          description: Recurso ausente ou logicamente excluído.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Not Found
+                status: 404
+                detail: Quarto não encontrado.
+        '409':
+          description: Duplicidade, concorrência ou regra de negócio impede a operação.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Conflict
+                status: 409
+                detail: Alteração simultânea. Refaça a operação.
+        '500':
+          description: Falha inesperada, sem detalhes internos.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Internal Server Error
+                status: 500
+                detail: Falha interna ao processar a solicitação.
+        '200':
+          description: Sucesso.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuartoResponse'
+              example:
+                numero: '101'
+                tipo: CASAL
+                capacidade: 2
+                valorDiaria: 200.0
+                ativo: true
+                id: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuartoRequest'
+            example:
+              numero: '101'
+              tipo: CASAL
+              capacidade: 2
+              valorDiaria: 200.0
+              ativo: true
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 1
+    delete:
+      tags:
+      - quartos
+      operationId: deleteQuartoPorId
+      summary: Excluir quarto
+      responses:
+        '400':
+          description: Dados ou parâmetros inválidos.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Bad Request
+                status: 400
+                detail: JSON, parâmetro, data ou enum inválido.
+        '401':
+          description: Token ausente/inválido, ou credenciais de login incorretas.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Unauthorized
+                status: 401
+                detail: Credenciais ausentes ou inválidas.
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+              example: Bearer
+              description: Desafio Bearer.
+        '403':
+          description: Perfil sem permissão.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Forbidden
+                status: 403
+                detail: Perfil sem permissão para esta operação.
+        '404':
+          description: Recurso ausente ou logicamente excluído.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Not Found
+                status: 404
+                detail: Quarto não encontrado.
+        '409':
+          description: Duplicidade, concorrência ou regra de negócio impede a operação.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Conflict
+                status: 409
+                detail: Alteração simultânea. Refaça a operação.
+        '500':
+          description: Falha inesperada, sem detalhes internos.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Internal Server Error
+                status: 500
+                detail: Falha interna ao processar a solicitação.
+        '204':
+          description: Exclusão concluída. HTTP 204, sem corpo de resposta.
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 1
+      description: Exclusão física, somente se nunca houve reserva vinculada, incluindo
+        histórico excluído. Resposta sem corpo. Reserva exige ausência de pagamentos
+        confirmados; pagamento exige estorno. Cadastros de hóspede/quarto exigem ausência
+        de histórico de reservas.
+  /api/v1/reservas:
+    get:
+      tags:
+      - reservas
+      operationId: getReservaLista
+      summary: Listar reservas
+      responses:
+        '400':
+          description: Dados ou parâmetros inválidos.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Bad Request
+                status: 400
+                detail: JSON, parâmetro, data ou enum inválido.
+        '401':
+          description: Token ausente/inválido, ou credenciais de login incorretas.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Unauthorized
+                status: 401
+                detail: Credenciais ausentes ou inválidas.
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+              example: Bearer
+              description: Desafio Bearer.
+        '403':
+          description: Perfil sem permissão.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Forbidden
+                status: 403
+                detail: Perfil sem permissão para esta operação.
+        '404':
+          description: Recurso ausente ou logicamente excluído.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Not Found
+                status: 404
+                detail: Reserva não encontrada.
+        '409':
+          description: Duplicidade, concorrência ou regra de negócio impede a operação.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Conflict
+                status: 409
+                detail: Alteração simultânea. Refaça a operação.
+        '500':
+          description: Falha inesperada, sem detalhes internos.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Internal Server Error
+                status: 500
+                detail: Falha interna ao processar a solicitação.
+        '200':
+          description: Sucesso.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginaReserva'
+              example:
+                content:
+                - hospedeId: 1
+                  quartoId: 1
+                  entrada: '2030-01-10'
+                  saida: '2030-01-12'
+                  quantidadeHospedes: 1
+                  id: 1
+                  valorTotal: 300.0
+                  valorDiariaContratada: 150.0
+                  status: CONFIRMADA
+                pageable:
+                  pageNumber: 0
+                  pageSize: 20
+                  sort:
+                    empty: false
+                    sorted: true
+                    unsorted: false
+                  offset: 0
+                  paged: true
+                  unpaged: false
+                totalElements: 1
+                totalPages: 1
+                last: true
+                size: 20
+                number: 0
+                sort:
+                  empty: false
+                  sorted: true
+                  unsorted: false
+                numberOfElements: 1
+                first: true
+                empty: false
+      parameters:
+      - name: pagina
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+        example: 0
+      - name: tamanho
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        example: 20
+      - name: ordenarPor
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - id
+          - entrada
+          - saida
+          - valorTotal
+          - status
+          default: id
+        example: id
+      - name: direcao
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - asc
+          - desc
+          default: asc
+        example: asc
+      - name: hospedeId
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          format: int64
+        example: 1
+      - name: quartoId
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          format: int64
+        example: 1
+      - name: status
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - CONFIRMADA
+          - CANCELADA
+        example: CONFIRMADA
+      - name: entrada
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date
+        description: Data de entrada exata.
+        example: '2030-01-10'
+      - name: saida
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date
+        description: Data de saída exata.
+        example: '2030-01-12'
+    post:
+      tags:
+      - reservas
+      operationId: postReservaLista
+      summary: Criar reserva
+      responses:
+        '400':
+          description: Dados ou parâmetros inválidos.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              examples:
+                jsonOuEnumInvalido:
+                  value:
+                    type: about:blank
+                    title: Bad Request
+                    status: 400
+                    detail: JSON, parâmetro, data ou enum inválido.
+                campoObrigatorioAusente:
+                  summary: Campo obrigatório omitido
+                  value:
+                    type: about:blank
+                    title: Bad Request
+                    status: 400
+                    detail: Dados inválidos.
+                    erros:
+                    - campo: hospedeId
+                      mensagem: não deve ser nulo
+        '401':
+          description: Token ausente/inválido, ou credenciais de login incorretas.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Unauthorized
+                status: 401
+                detail: Credenciais ausentes ou inválidas.
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+              example: Bearer
+              description: Desafio Bearer.
+        '403':
+          description: Perfil sem permissão.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Forbidden
+                status: 403
+                detail: Perfil sem permissão para esta operação.
+        '404':
+          description: Recurso ausente ou logicamente excluído.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Not Found
+                status: 404
+                detail: Reserva não encontrada.
+        '409':
+          description: Duplicidade, concorrência ou regra de negócio impede a operação.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Conflict
+                status: 409
+                detail: Alteração simultânea. Refaça a operação.
+        '500':
+          description: Falha inesperada, sem detalhes internos.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Internal Server Error
+                status: 500
+                detail: Falha interna ao processar a solicitação.
+        '201':
+          description: Criado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReservaResponse'
+              example:
+                hospedeId: 1
+                quartoId: 1
+                entrada: '2030-01-10'
+                saida: '2030-01-12'
+                quantidadeHospedes: 1
+                id: 1
+                valorTotal: 300.0
+                valorDiariaContratada: 150.0
+                status: CONFIRMADA
+          headers:
+            Location:
+              description: URI relativa do recurso criado.
+              schema:
+                type: string
+              example: /api/v1/reservas/1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReservaRequest'
+            example:
+              hospedeId: 1
+              quartoId: 1
+              entrada: '2030-01-10'
+              saida: '2030-01-12'
+              quantidadeHospedes: 1
+  /api/v1/reservas/{id}:
+    get:
+      tags:
+      - reservas
+      operationId: getReservaPorId
+      summary: Consultar reserva
+      responses:
+        '400':
+          description: Dados ou parâmetros inválidos.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Bad Request
+                status: 400
+                detail: JSON, parâmetro, data ou enum inválido.
+        '401':
+          description: Token ausente/inválido, ou credenciais de login incorretas.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Unauthorized
+                status: 401
+                detail: Credenciais ausentes ou inválidas.
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+              example: Bearer
+              description: Desafio Bearer.
+        '403':
+          description: Perfil sem permissão.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Forbidden
+                status: 403
+                detail: Perfil sem permissão para esta operação.
+        '404':
+          description: Recurso ausente ou logicamente excluído.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Not Found
+                status: 404
+                detail: Reserva não encontrada.
+        '409':
+          description: Duplicidade, concorrência ou regra de negócio impede a operação.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Conflict
+                status: 409
+                detail: Alteração simultânea. Refaça a operação.
+        '500':
+          description: Falha inesperada, sem detalhes internos.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Internal Server Error
+                status: 500
+                detail: Falha interna ao processar a solicitação.
+        '200':
+          description: Sucesso.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReservaResponse'
+              example:
+                hospedeId: 1
+                quartoId: 1
+                entrada: '2030-01-10'
+                saida: '2030-01-12'
+                quantidadeHospedes: 1
+                id: 1
+                valorTotal: 300.0
+                valorDiariaContratada: 150.0
+                status: CONFIRMADA
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 1
+    put:
+      tags:
+      - reservas
+      operationId: putReservaPorId
+      summary: Atualizar reserva
+      responses:
+        '400':
+          description: Dados ou parâmetros inválidos.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              examples:
+                jsonOuEnumInvalido:
+                  value:
+                    type: about:blank
+                    title: Bad Request
+                    status: 400
+                    detail: JSON, parâmetro, data ou enum inválido.
+                campoObrigatorioAusente:
+                  summary: Campo obrigatório omitido
+                  value:
+                    type: about:blank
+                    title: Bad Request
+                    status: 400
+                    detail: Dados inválidos.
+                    erros:
+                    - campo: hospedeId
+                      mensagem: não deve ser nulo
+        '401':
+          description: Token ausente/inválido, ou credenciais de login incorretas.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Unauthorized
+                status: 401
+                detail: Credenciais ausentes ou inválidas.
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+              example: Bearer
+              description: Desafio Bearer.
+        '403':
+          description: Perfil sem permissão.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Forbidden
+                status: 403
+                detail: Perfil sem permissão para esta operação.
+        '404':
+          description: Recurso ausente ou logicamente excluído.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Not Found
+                status: 404
+                detail: Reserva não encontrada.
+        '409':
+          description: Duplicidade, concorrência ou regra de negócio impede a operação.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Conflict
+                status: 409
+                detail: Alteração simultânea. Refaça a operação.
+        '500':
+          description: Falha inesperada, sem detalhes internos.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Internal Server Error
+                status: 500
+                detail: Falha interna ao processar a solicitação.
+        '200':
+          description: Sucesso.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReservaResponse'
+              example:
+                hospedeId: 1
+                quartoId: 1
+                entrada: '2030-01-10'
+                saida: '2030-01-12'
+                quantidadeHospedes: 2
+                id: 1
+                valorTotal: 300.0
+                valorDiariaContratada: 150.0
+                status: CONFIRMADA
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReservaAtualizacaoRequest'
+            example:
+              hospedeId: 1
+              quartoId: 1
+              entrada: '2030-01-10'
+              saida: '2030-01-12'
+              quantidadeHospedes: 2
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 1
+      description: 'Somente confirmada, sem pagamentos confirmados e com saída original
+        posterior a hoje. Mesmo quarto preserva a diária contratada; alterações de
+        datas recalculam somente o número de noites. Troca de quarto em reserva futura
+        contrata a diária vigente do destino. Em andamento (entrada anterior a hoje):
+        mantém quarto/entrada originais e saída proposta posterior a hoje. Revalida
+        disponibilidade, capacidade, duração e total. Pré-condição: reserva confirmada,
+        sem pagamentos confirmados. A diária do quarto foi reajustada para 200, mas
+        a reserva mantém diária contratada 150 e total 300 para duas noites.'
+    delete:
+      tags:
+      - reservas
+      operationId: deleteReservaPorId
+      summary: Excluir reserva
+      responses:
+        '400':
+          description: Dados ou parâmetros inválidos.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Bad Request
+                status: 400
+                detail: JSON, parâmetro, data ou enum inválido.
+        '401':
+          description: Token ausente/inválido, ou credenciais de login incorretas.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Unauthorized
+                status: 401
+                detail: Credenciais ausentes ou inválidas.
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+              example: Bearer
+              description: Desafio Bearer.
+        '403':
+          description: Perfil sem permissão.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Forbidden
+                status: 403
+                detail: Perfil sem permissão para esta operação.
+        '404':
+          description: Recurso ausente ou logicamente excluído.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Not Found
+                status: 404
+                detail: Reserva não encontrada.
+        '409':
+          description: Duplicidade, concorrência ou regra de negócio impede a operação.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Conflict
+                status: 409
+                detail: Alteração simultânea. Refaça a operação.
+        '500':
+          description: Falha inesperada, sem detalhes internos.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Internal Server Error
+                status: 500
+                detail: Falha interna ao processar a solicitação.
+        '204':
+          description: Exclusão concluída. HTTP 204, sem corpo de resposta.
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 1
+      description: Exclusão lógica. Reserva é cancelada; exige ausência de pagamentos
+        confirmados. Resposta sem corpo. Reserva exige ausência de pagamentos confirmados;
+        pagamento exige estorno. Cadastros de hóspede/quarto exigem ausência de histórico
+        de reservas.
+  /api/v1/reservas/{id}/cancelar:
+    patch:
+      tags:
+      - reservas
+      operationId: cancelarReserva
+      summary: Cancelar reserva
+      description: Idempotente; preserva histórico. Cancelamento exige ausência de
+        pagamentos confirmados. Estorno é registro interno, sem integração bancária.
+        Cancelar reserva exige que não existam pagamentos confirmados. Estorno é registro
+        interno e não integra um gateway bancário.
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 1
+      responses:
+        '400':
+          description: Dados ou parâmetros inválidos.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Bad Request
+                status: 400
+                detail: JSON, parâmetro, data ou enum inválido.
+        '401':
+          description: Token ausente/inválido, ou credenciais de login incorretas.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Unauthorized
+                status: 401
+                detail: Credenciais ausentes ou inválidas.
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+              example: Bearer
+              description: Desafio Bearer.
+        '403':
+          description: Perfil sem permissão.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Forbidden
+                status: 403
+                detail: Perfil sem permissão para esta operação.
+        '404':
+          description: Recurso ausente ou logicamente excluído.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Not Found
+                status: 404
+                detail: Reserva não encontrada.
+        '409':
+          description: Duplicidade, concorrência ou regra de negócio impede a operação.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Conflict
+                status: 409
+                detail: Alteração simultânea. Refaça a operação.
+        '500':
+          description: Falha inesperada, sem detalhes internos.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Internal Server Error
+                status: 500
+                detail: Falha interna ao processar a solicitação.
+        '200':
+          description: Sucesso.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReservaResponse'
+              example:
+                hospedeId: 1
+                quartoId: 1
+                entrada: '2030-01-10'
+                saida: '2030-01-12'
+                quantidadeHospedes: 1
+                id: 1
+                valorTotal: 300.0
+                valorDiariaContratada: 150.0
+                status: CANCELADA
+  /api/v1/pagamentos:
+    get:
+      tags:
+      - pagamentos
+      operationId: getPagamentoLista
+      summary: Listar pagamentos
+      responses:
+        '400':
+          description: Dados ou parâmetros inválidos.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Bad Request
+                status: 400
+                detail: JSON, parâmetro, data ou enum inválido.
+        '401':
+          description: Token ausente/inválido, ou credenciais de login incorretas.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Unauthorized
+                status: 401
+                detail: Credenciais ausentes ou inválidas.
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+              example: Bearer
+              description: Desafio Bearer.
+        '403':
+          description: Perfil sem permissão.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Forbidden
+                status: 403
+                detail: Perfil sem permissão para esta operação.
+        '404':
+          description: Recurso ausente ou logicamente excluído.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Not Found
+                status: 404
+                detail: Pagamento não encontrado.
+        '409':
+          description: Duplicidade, concorrência ou regra de negócio impede a operação.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Conflict
+                status: 409
+                detail: Alteração simultânea. Refaça a operação.
+        '500':
+          description: Falha inesperada, sem detalhes internos.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Internal Server Error
+                status: 500
+                detail: Falha interna ao processar a solicitação.
+        '200':
+          description: Sucesso.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginaPagamento'
+              example:
+                content:
+                - reservaId: 1
+                  valor: 300.0
+                  forma: PIX
+                  id: 1
+                  status: CONFIRMADO
+                pageable:
+                  pageNumber: 0
+                  pageSize: 20
+                  sort:
+                    empty: false
+                    sorted: true
+                    unsorted: false
+                  offset: 0
+                  paged: true
+                  unpaged: false
+                totalElements: 1
+                totalPages: 1
+                last: true
+                size: 20
+                number: 0
+                sort:
+                  empty: false
+                  sorted: true
+                  unsorted: false
+                numberOfElements: 1
+                first: true
+                empty: false
+      parameters:
+      - name: pagina
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+        example: 0
+      - name: tamanho
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        example: 20
+      - name: ordenarPor
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - id
+          - valor
+          - status
+          - forma
+          default: id
+        example: id
+      - name: direcao
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - asc
+          - desc
+          default: asc
+        example: asc
+      - name: reservaId
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          format: int64
+        example: 1
+      - name: status
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - CONFIRMADO
+          - ESTORNADO
+        example: CONFIRMADO
+      - name: forma
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - PIX
+          - DINHEIRO
+          - CARTAO_CREDITO
+          - CARTAO_DEBITO
+          - TRANSFERENCIA
+        example: PIX
+    post:
+      tags:
+      - pagamentos
+      operationId: postPagamentoLista
+      summary: Criar pagamento
+      responses:
+        '400':
+          description: Dados ou parâmetros inválidos.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              examples:
+                jsonOuEnumInvalido:
+                  value:
+                    type: about:blank
+                    title: Bad Request
+                    status: 400
+                    detail: JSON, parâmetro, data ou enum inválido.
+                campoObrigatorioAusente:
+                  summary: Campo obrigatório omitido
+                  value:
+                    type: about:blank
+                    title: Bad Request
+                    status: 400
+                    detail: Dados inválidos.
+                    erros:
+                    - campo: reservaId
+                      mensagem: não deve ser nulo
+        '401':
+          description: Token ausente/inválido, ou credenciais de login incorretas.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Unauthorized
+                status: 401
+                detail: Credenciais ausentes ou inválidas.
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+              example: Bearer
+              description: Desafio Bearer.
+        '403':
+          description: Perfil sem permissão.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Forbidden
+                status: 403
+                detail: Perfil sem permissão para esta operação.
+        '404':
+          description: Recurso ausente ou logicamente excluído.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Not Found
+                status: 404
+                detail: Pagamento não encontrado.
+        '409':
+          description: Duplicidade, concorrência ou regra de negócio impede a operação.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Conflict
+                status: 409
+                detail: Alteração simultânea. Refaça a operação.
+        '500':
+          description: Falha inesperada, sem detalhes internos.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Internal Server Error
+                status: 500
+                detail: Falha interna ao processar a solicitação.
+        '201':
+          description: Criado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagamentoResponse'
+              example:
+                reservaId: 1
+                valor: 300.0
+                forma: PIX
+                id: 1
+                status: CONFIRMADO
+          headers:
+            Location:
+              description: URI relativa do recurso criado.
+              schema:
+                type: string
+              example: /api/v1/pagamentos/1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PagamentoRequest'
+            example:
+              reservaId: 1
+              valor: 300.0
+              forma: PIX
+  /api/v1/pagamentos/{id}:
+    get:
+      tags:
+      - pagamentos
+      operationId: getPagamentoPorId
+      summary: Consultar pagamento
+      responses:
+        '400':
+          description: Dados ou parâmetros inválidos.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Bad Request
+                status: 400
+                detail: JSON, parâmetro, data ou enum inválido.
+        '401':
+          description: Token ausente/inválido, ou credenciais de login incorretas.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Unauthorized
+                status: 401
+                detail: Credenciais ausentes ou inválidas.
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+              example: Bearer
+              description: Desafio Bearer.
+        '403':
+          description: Perfil sem permissão.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Forbidden
+                status: 403
+                detail: Perfil sem permissão para esta operação.
+        '404':
+          description: Recurso ausente ou logicamente excluído.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Not Found
+                status: 404
+                detail: Pagamento não encontrado.
+        '409':
+          description: Duplicidade, concorrência ou regra de negócio impede a operação.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Conflict
+                status: 409
+                detail: Alteração simultânea. Refaça a operação.
+        '500':
+          description: Falha inesperada, sem detalhes internos.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Internal Server Error
+                status: 500
+                detail: Falha interna ao processar a solicitação.
+        '200':
+          description: Sucesso.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagamentoResponse'
+              example:
+                reservaId: 1
+                valor: 300.0
+                forma: PIX
+                id: 1
+                status: CONFIRMADO
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 1
+    put:
+      tags:
+      - pagamentos
+      operationId: putPagamentoPorId
+      summary: Atualizar pagamento
+      responses:
+        '400':
+          description: Dados ou parâmetros inválidos.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              examples:
+                jsonOuEnumInvalido:
+                  value:
+                    type: about:blank
+                    title: Bad Request
+                    status: 400
+                    detail: JSON, parâmetro, data ou enum inválido.
+                campoObrigatorioAusente:
+                  summary: Campo obrigatório omitido
+                  value:
+                    type: about:blank
+                    title: Bad Request
+                    status: 400
+                    detail: Dados inválidos.
+                    erros:
+                    - campo: reservaId
+                      mensagem: não deve ser nulo
+        '401':
+          description: Token ausente/inválido, ou credenciais de login incorretas.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Unauthorized
+                status: 401
+                detail: Credenciais ausentes ou inválidas.
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+              example: Bearer
+              description: Desafio Bearer.
+        '403':
+          description: Perfil sem permissão.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Forbidden
+                status: 403
+                detail: Perfil sem permissão para esta operação.
+        '404':
+          description: Recurso ausente ou logicamente excluído.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Not Found
+                status: 404
+                detail: Pagamento não encontrado.
+        '409':
+          description: Duplicidade, concorrência ou regra de negócio impede a operação.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Conflict
+                status: 409
+                detail: Alteração simultânea. Refaça a operação.
+        '500':
+          description: Falha inesperada, sem detalhes internos.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Internal Server Error
+                status: 500
+                detail: Falha interna ao processar a solicitação.
+        '200':
+          description: Sucesso.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagamentoResponse'
+              example:
+                reservaId: 1
+                valor: 250.0
+                forma: PIX
+                id: 1
+                status: ESTORNADO
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PagamentoRequest'
+            example:
+              reservaId: 1
+              valor: 250.0
+              forma: PIX
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 1
+      description: 'Somente estornado. Corrige valor/forma, mantendo reserva e status
+        ESTORNADO; não movimenta dinheiro. Pré-condição: pagamento já ESTORNADO. A
+        correção preserva esse status e o vínculo com a reserva; um pagamento CONFIRMADO
+        retorna 409.'
+    delete:
+      tags:
+      - pagamentos
+      operationId: deletePagamentoPorId
+      summary: Excluir pagamento
+      responses:
+        '400':
+          description: Dados ou parâmetros inválidos.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Bad Request
+                status: 400
+                detail: JSON, parâmetro, data ou enum inválido.
+        '401':
+          description: Token ausente/inválido, ou credenciais de login incorretas.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Unauthorized
+                status: 401
+                detail: Credenciais ausentes ou inválidas.
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+              example: Bearer
+              description: Desafio Bearer.
+        '403':
+          description: Perfil sem permissão.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Forbidden
+                status: 403
+                detail: Perfil sem permissão para esta operação.
+        '404':
+          description: Recurso ausente ou logicamente excluído.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Not Found
+                status: 404
+                detail: Pagamento não encontrado.
+        '409':
+          description: Duplicidade, concorrência ou regra de negócio impede a operação.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Conflict
+                status: 409
+                detail: Alteração simultânea. Refaça a operação.
+        '500':
+          description: Falha inesperada, sem detalhes internos.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Internal Server Error
+                status: 500
+                detail: Falha interna ao processar a solicitação.
+        '204':
+          description: Exclusão concluída. HTTP 204, sem corpo de resposta.
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 1
+      description: Exclusão lógica, somente após estorno. Resposta sem corpo. Reserva
+        exige ausência de pagamentos confirmados; pagamento exige estorno. Cadastros
+        de hóspede/quarto exigem ausência de histórico de reservas.
+  /api/v1/pagamentos/{id}/estornar:
+    patch:
+      tags:
+      - pagamentos
+      operationId: estornarPagamento
+      summary: Estornar pagamento
+      description: Idempotente; preserva histórico. Cancelamento exige ausência de
+        pagamentos confirmados. Estorno é registro interno, sem integração bancária.
+        Cancelar reserva exige que não existam pagamentos confirmados. Estorno é registro
+        interno e não integra um gateway bancário.
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 1
+      responses:
+        '400':
+          description: Dados ou parâmetros inválidos.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Bad Request
+                status: 400
+                detail: JSON, parâmetro, data ou enum inválido.
+        '401':
+          description: Token ausente/inválido, ou credenciais de login incorretas.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Unauthorized
+                status: 401
+                detail: Credenciais ausentes ou inválidas.
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+              example: Bearer
+              description: Desafio Bearer.
+        '403':
+          description: Perfil sem permissão.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Forbidden
+                status: 403
+                detail: Perfil sem permissão para esta operação.
+        '404':
+          description: Recurso ausente ou logicamente excluído.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Not Found
+                status: 404
+                detail: Pagamento não encontrado.
+        '409':
+          description: Duplicidade, concorrência ou regra de negócio impede a operação.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Conflict
+                status: 409
+                detail: Alteração simultânea. Refaça a operação.
+        '500':
+          description: Falha inesperada, sem detalhes internos.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Internal Server Error
+                status: 500
+                detail: Falha interna ao processar a solicitação.
+        '200':
+          description: Sucesso.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagamentoResponse'
+              example:
+                reservaId: 1
+                valor: 300.0
+                forma: PIX
+                id: 1
+                status: ESTORNADO
+  /api/v1/auth/login:
+    post:
+      tags:
+      - auth
+      operationId: login
+      summary: Autenticar e emitir JWT
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            example:
+              username: admin
+              password: senha-local-exemplo-123
+      responses:
+        '200':
+          description: JWT emitido.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+              description: no-store
+              example: no-store
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+              example:
+                accessToken: <JWT_EMITIDO_PELO_LOGIN>
+                tokenType: Bearer
+                expiresIn: 900
+        '400':
+          description: Dados ou parâmetros inválidos.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              examples:
+                jsonOuEnumInvalido:
+                  value:
+                    type: about:blank
+                    title: Bad Request
+                    status: 400
+                    detail: JSON, parâmetro, data ou enum inválido.
+                campoObrigatorioAusente:
+                  summary: Campo obrigatório omitido
+                  value:
+                    type: about:blank
+                    title: Bad Request
+                    status: 400
+                    detail: Dados inválidos.
+                    erros:
+                    - campo: username
+                      mensagem: não deve estar em branco
+        '401':
+          description: Token ausente/inválido, ou credenciais de login incorretas.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Unauthorized
+                status: 401
+                detail: Credenciais ausentes ou inválidas.
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+              example: Bearer
+              description: Desafio Bearer.
+        '500':
+          description: Falha inesperada, sem detalhes internos.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Internal Server Error
+                status: 500
+                detail: Falha interna ao processar a solicitação.
+      description: ' Credenciais ilustrativas: use os valores configurados localmente.
+        O token exibido é um marcador, não um JWT válido.'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    HospedeRequest:
+      type: object
+      required:
+      - nome
+      - documento
+      - email
+      - telefone
+      properties:
+        nome:
+          type: string
+          minLength: 1
+          maxLength: 120
+        documento:
+          type: string
+          minLength: 1
+          maxLength: 30
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        telefone:
+          type: string
+          minLength: 1
+          maxLength: 30
+    HospedeResponse:
+      type: object
+      required:
+      - nome
+      - documento
+      - email
+      - telefone
+      - id
+      properties:
+        nome:
+          type: string
+          minLength: 1
+          maxLength: 120
+        documento:
+          type: string
+          minLength: 1
+          maxLength: 30
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        telefone:
+          type: string
+          minLength: 1
+          maxLength: 30
+        id:
+          type: integer
+          format: int64
+    PaginaHospede:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/HospedeResponse'
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+        number:
+          type: integer
+        size:
+          type: integer
+        first:
+          type: boolean
+        last:
+          type: boolean
+        empty:
+          type: boolean
+      description: Página Spring Data. Campos adicionais de paginação/ordenação podem
+        ser retornados.
+    QuartoRequest:
+      type: object
+      required:
+      - numero
+      - tipo
+      - capacidade
+      - valorDiaria
+      - ativo
+      properties:
+        numero:
+          type: string
+          minLength: 1
+          maxLength: 20
+        tipo:
+          type: string
+          minLength: 1
+          maxLength: 50
+        capacidade:
+          type: integer
+          minimum: 1
+        valorDiaria:
+          type: number
+          minimum: 0.01
+          maximum: 9999999999.99
+          multipleOf: 0.01
+        ativo:
+          type: boolean
+    QuartoResponse:
+      type: object
+      required:
+      - numero
+      - tipo
+      - capacidade
+      - valorDiaria
+      - ativo
+      - id
+      properties:
+        numero:
+          type: string
+          minLength: 1
+          maxLength: 20
+        tipo:
+          type: string
+          minLength: 1
+          maxLength: 50
+        capacidade:
+          type: integer
+          minimum: 1
+        valorDiaria:
+          type: number
+          minimum: 0.01
+          maximum: 9999999999.99
+          multipleOf: 0.01
+        ativo:
+          type: boolean
+        id:
+          type: integer
+          format: int64
+    PaginaQuarto:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuartoResponse'
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+        number:
+          type: integer
+        size:
+          type: integer
+        first:
+          type: boolean
+        last:
+          type: boolean
+        empty:
+          type: boolean
+      description: Página Spring Data. Campos adicionais de paginação/ordenação podem
+        ser retornados.
+    ReservaRequest:
+      type: object
+      required:
+      - hospedeId
+      - quartoId
+      - entrada
+      - saida
+      - quantidadeHospedes
+      properties:
+        hospedeId:
+          type: integer
+          format: int64
+          minimum: 1
+        quartoId:
+          type: integer
+          format: int64
+          minimum: 1
+        entrada:
+          type: string
+          format: date
+          description: 'Não pode ser passada. Nome efetivo: entrada.'
+        saida:
+          type: string
+          format: date
+          description: Posterior à entrada; estadia máxima de 365 noites.
+        quantidadeHospedes:
+          type: integer
+          minimum: 1
+    ReservaResponse:
+      type: object
+      required:
+      - hospedeId
+      - quartoId
+      - entrada
+      - saida
+      - quantidadeHospedes
+      - id
+      - valorTotal
+      - status
+      - valorDiariaContratada
+      properties:
+        hospedeId:
+          type: integer
+          format: int64
+          minimum: 1
+        quartoId:
+          type: integer
+          format: int64
+          minimum: 1
+        entrada:
+          type: string
+          format: date
+          description: 'Não pode ser passada. Nome efetivo: entrada.'
+        saida:
+          type: string
+          format: date
+          description: Posterior à entrada; estadia máxima de 365 noites.
+        quantidadeHospedes:
+          type: integer
+          minimum: 1
+        id:
+          type: integer
+          format: int64
+        valorTotal:
+          type: number
+          minimum: 0.01
+          maximum: 9999999999.99
+          multipleOf: 0.01
+        status:
+          type: string
+          enum:
+          - CONFIRMADA
+          - CANCELADA
+        valorDiariaContratada:
+          type: number
+          minimum: 0.01
+          maximum: 9999999999.99
+          multipleOf: 0.01
+          description: Diária contratada, preservada em alterações do mesmo quarto.
+            Registros legados derivam do total original dividido pelo número de noites.
+    PaginaReserva:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReservaResponse'
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+        number:
+          type: integer
+        size:
+          type: integer
+        first:
+          type: boolean
+        last:
+          type: boolean
+        empty:
+          type: boolean
+      description: Página Spring Data. Campos adicionais de paginação/ordenação podem
+        ser retornados.
+    PagamentoRequest:
+      type: object
+      required:
+      - reservaId
+      - valor
+      - forma
+      properties:
+        reservaId:
+          type: integer
+          format: int64
+          minimum: 1
+        valor:
+          type: number
+          minimum: 0.01
+          maximum: 9999999999.99
+          multipleOf: 0.01
+        forma:
+          type: string
+          enum:
+          - PIX
+          - DINHEIRO
+          - CARTAO_CREDITO
+          - CARTAO_DEBITO
+          - TRANSFERENCIA
+    PagamentoResponse:
+      type: object
+      required:
+      - reservaId
+      - valor
+      - forma
+      - id
+      - status
+      properties:
+        reservaId:
+          type: integer
+          format: int64
+          minimum: 1
+        valor:
+          type: number
+          minimum: 0.01
+          maximum: 9999999999.99
+          multipleOf: 0.01
+        forma:
+          type: string
+          enum:
+          - PIX
+          - DINHEIRO
+          - CARTAO_CREDITO
+          - CARTAO_DEBITO
+          - TRANSFERENCIA
+        id:
+          type: integer
+          format: int64
+        status:
+          type: string
+          enum:
+          - CONFIRMADO
+          - ESTORNADO
+    PaginaPagamento:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/PagamentoResponse'
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+        number:
+          type: integer
+        size:
+          type: integer
+        first:
+          type: boolean
+        last:
+          type: boolean
+        empty:
+          type: boolean
+      description: Página Spring Data. Campos adicionais de paginação/ordenação podem
+        ser retornados.
+    ProblemDetail:
+      type: object
+      properties:
+        type:
+          type: string
+          format: uri
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        instance:
+          type: string
+        erros:
+          type: array
+          items:
+            type: object
+            properties:
+              campo:
+                type: string
+              mensagem:
+                type: string
+    LoginRequest:
+      type: object
+      required:
+      - username
+      - password
+      properties:
+        username:
+          type: string
+          minLength: 1
+          maxLength: 100
+        password:
+          type: string
+          minLength: 1
+          maxLength: 72
+          format: password
+    LoginResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+        tokenType:
+          type: string
+          enum:
+          - Bearer
+        expiresIn:
+          type: integer
+          description: 'Validade em segundos. Padrão: 900.'
+    ReservaAtualizacaoRequest:
+      type: object
+      required:
+      - hospedeId
+      - quartoId
+      - entrada
+      - saida
+      - quantidadeHospedes
+      properties:
+        hospedeId:
+          type: integer
+          format: int64
+          minimum: 1
+        quartoId:
+          type: integer
+          format: int64
+          minimum: 1
+        entrada:
+          type: string
+          format: date
+          description: 'Reserva futura: hoje ou depois. Em andamento: deve manter
+            a entrada original, mesmo passada.'
+        saida:
+          type: string
+          format: date
+          description: Posterior à entrada; estadia máxima de 365 noites.
+        quantidadeHospedes:
+          type: integer
+          minimum: 1
